@@ -11,6 +11,7 @@ import (
 
 var host string = "http://localhost:11015/v3"
 var namespace string = "default"
+var trim string = "-cdap-data-pipeline.json"
 
 //var authToken string = ""
 
@@ -28,14 +29,14 @@ func main() {
 	for _, item := range items {
 		items, _ := ioutil.ReadFile(dir + "/" + item.Name())
 		if strings.HasSuffix(item.Name(), ".json") {
-			deployPipeline(items, item.Name(), host, namespace)
+			deployPipeline(items, item.Name(), host, namespace, trim)
 		}
 	}
 }
 
-func deployPipeline(jsonData []byte, fileName string, host string, namespace string) {
+func deployPipeline(jsonData []byte, fileName string, host string, namespace string, trim string) {
 	//exported pipelines come with -cdap-data-pipeline.json suffix we only want the name to call the pipline
-	fileName = strings.TrimSuffix(fileName, "-cdap-data-pipeline.json")
+	fileName = strings.TrimSuffix(fileName, trim)
 
 	// var bearer = "Bearer" + authToken
 
