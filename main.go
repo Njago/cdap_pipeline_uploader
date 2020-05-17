@@ -9,10 +9,16 @@ import (
 	"strings"
 )
 
+var host string = "http://localhost:11015/v3"
+var namespace string = "default"
+
+//var authToken string = ""
+
 func main() {
 
 	//get a dir and the files that dir holds
-	items, err := ioutil.ReadDir("/Users/bajrambojku/pipelines")
+	dir := "/Users/bajrambojku/pipelines"
+	items, err := ioutil.ReadDir(dir)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,20 +26,20 @@ func main() {
 	//loop of those files and get the json data
 	//call deply function to deploy each file with its file name
 	for _, item := range items {
-		items, _ := ioutil.ReadFile("/Users/bajrambojku/pipelines/" + item.Name())
+		items, _ := ioutil.ReadFile(dir + "/" + item.Name())
 		if strings.HasSuffix(item.Name(), ".json") {
-			deployPipeline(items, item.Name())
+			deployPipeline(items, item.Name(), host, namespace)
 		}
 	}
 }
 
-func deployPipeline(jsonData []byte, fileName string) {
-
+func deployPipeline(jsonData []byte, fileName string, host string, namespace string) {
+	//exported pipelines come with -cdap-data-pipeline.json suffix we only want the name to call the pipline
 	fileName = strings.TrimSuffix(fileName, "-cdap-data-pipeline.json")
 
 	// var bearer = "Bearer" + authToken
 
-	request, _ := http.NewRequest("PUT", "http://localhost:11015/v3/namespaces/default/apps/"+fileName, bytes.NewBuffer(jsonData))
+	request, _ := http.NewRequest("PUT", host+"/namespaces/"+namespace+"/apps/"+fileName, bytes.NewBuffer(jsonData))
 	request.Header.Set("Content-Type", "application/json")
 	// request.Header.Add("Authorization", bearer)
 	client := &http.Client{}
@@ -46,5 +52,4 @@ func deployPipeline(jsonData []byte, fileName string) {
 	} else {
 		fmt.Println(string(data))
 	}
-
 }
