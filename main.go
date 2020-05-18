@@ -42,14 +42,20 @@ func main() {
 	}
 }
 
-func deployPipeline(jsonData []byte, fileName string, host string, namespace string, trim string, c chan string, authToken string) {
+func deployPipeline(jsonData []byte,
+	fileName string, host string,
+	namespace string, trim string,
+	c chan string, authToken string) {
 
 	//exported pipelines come with -cdap-data-pipeline.json suffix we only want the name to call the pipline
 	fileName = strings.TrimSuffix(fileName, trim)
 
 	var bearer = "Bearer" + authToken
 
-	request, _ := http.NewRequest("PUT", host+"/namespaces/"+namespace+"/apps/"+fileName, bytes.NewBuffer(jsonData))
+	request, err := http.NewRequest("PUT", host+"/namespaces/"+namespace+"/apps/"+fileName, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Printf("Http request failed with error %s\n", err.Error())
+	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Add("Authorization", bearer)
 	client := &http.Client{}
