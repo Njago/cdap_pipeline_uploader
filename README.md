@@ -9,8 +9,8 @@ This will loop through a directory of .Json files exported from cdap and upload 
 
 | Variable  	| Use                                                               
 |-----------	|-------------------------------------------------------------------
-| dir       	| directory to pull files from                                      
-| namespace 	| namespace to upload pipelines to                                  
-| host      	| default is for cdap. change to <CDF instance url>/api for CDF use 
-| authToken     | authtoken from gcloud auth for CDF use
-| trim          | default is -cdap-data-pipeline.json for cdap
+| dir       	| Directory to pull files from                                      
+| namespace 	| Namespace to upload pipelines to                                  
+| host      	| Default is for cdap. Change to CDF instance url/api for CDF use 
+| authToken     | Authtoken from gcloud auth for CDF use
+| trim          | Default is "-cdap-data-pipeline.json" for cdap
