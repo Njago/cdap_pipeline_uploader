@@ -24,17 +24,26 @@ func main() {
 		log.Fatal(err)
 	}
 
+	//channel for go routine
+	c := make(chan string)
+
 	//loop of those files and get the json data
 	//call deply function to deploy each file with its file name
 	for _, item := range items {
 		items, _ := ioutil.ReadFile(dir + "/" + item.Name())
 		if strings.HasSuffix(item.Name(), ".json") {
-			deployPipeline(items, item.Name(), host, namespace, trim)
+			go deployPipeline(items, item.Name(), host, namespace, trim, c)
 		}
+	}
+
+	//for loop for go routine channels
+	for i := 0; i < len(items)-1; i++ {
+		fmt.Println(<-c)
 	}
 }
 
-func deployPipeline(jsonData []byte, fileName string, host string, namespace string, trim string) {
+func deployPipeline(jsonData []byte, fileName string, host string, namespace string, trim string, c chan string) {
+
 	//exported pipelines come with -cdap-data-pipeline.json suffix we only want the name to call the pipline
 	fileName = strings.TrimSuffix(fileName, trim)
 
@@ -47,10 +56,14 @@ func deployPipeline(jsonData []byte, fileName string, host string, namespace str
 	response, err := client.Do(request)
 	data, _ := ioutil.ReadAll(response.Body)
 
+	c <- "Response Recieved"
+
 	//Error handing for err messages
 	if err != nil {
 		fmt.Printf("Http request failed with error %s\n", err.Error())
 	} else {
 		fmt.Println(string(data))
 	}
+
+	defer response.Body.Close()
 }
