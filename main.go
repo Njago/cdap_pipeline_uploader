@@ -12,10 +12,7 @@ import (
 
 func main() {
 
-	// url := "https://bajram-test-cdf-bajram-cdf-dot-usw1.datafusion.googleusercontent.com/api/v3/namespaces/default/apps/upload"
-	// file, _ := ioutil.ReadFile("/Users/bajram/data/pipelines/pipeline1-cdap-data-pipeline.json")
-
-	dir := "/Users/bajram/data/pipelines"
+	dir := os.ExpandEnv("${DIR}")
 	items, err := ioutil.ReadDir(dir)
 	if err != nil {
 		fmt.Println(err)
@@ -31,7 +28,6 @@ func main() {
 
 		fileName := strings.TrimSuffix(item.Name(), "-cdap-data-pipeline.json")
 		url := os.ExpandEnv("${CDAP_ENDPOINT}/v3/namespaces/" + os.ExpandEnv("${NAMESPACE}/apps/") + fileName)
-		// url := os.ExpandEnv("${CDAP_ENDPOINT}/v3/namespaces/default/apps/test")
 		fmt.Println(url)
 		go deployPipeline(url, jsonData, c)
 		time.Sleep(10 * time.Second)
