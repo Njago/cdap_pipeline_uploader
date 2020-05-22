@@ -4,36 +4,37 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 )
 
 func main() {
 
-	var host string = "http://localhost:11015/v3"
-	var authToken string = ""
-	var namespace string = "default"
-	var trim string = "-cdap-data-pipeline.json"
+	// url := "https://bajram-test-cdf-bajram-cdf-dot-usw1.datafusion.googleusercontent.com/api/v3/namespaces/default/apps/upload"
+	// file, _ := ioutil.ReadFile("/Users/bajram/data/pipelines/pipeline1-cdap-data-pipeline.json")
 
-	//get a dir and the files that dir holds
-	dir := "/Users/bajrambojku/pipelines"
-
+	dir := "/Users/bajram/data/pipelines"
 	items, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
-	//channel for go routine
 	c := make(chan string)
-
-	//loop of those files and get the json data
-	//call deply function to deploy each file with its file name
 	for _, item := range items {
-		items, _ := ioutil.ReadFile(dir + "/" + item.Name())
-		if strings.HasSuffix(item.Name(), ".json") {
-			go deployPipeline(items, item.Name(), host, namespace, trim, c, authToken)
+		jsonData, err := ioutil.ReadFile(dir + "/" + item.Name())
+		fmt.Println(item.Name())
+		if err != nil {
+			fmt.Println(err)
 		}
+
+		fileName := strings.TrimSuffix(item.Name(), "-cdap-data-pipeline.json")
+		url := os.ExpandEnv("${CDAP_ENDPOINT}/v3/namespaces/" + os.ExpandEnv("${NAMESPACE}/apps/") + fileName)
+		// url := os.ExpandEnv("${CDAP_ENDPOINT}/v3/namespaces/default/apps/test")
+		fmt.Println(url)
+		go deployPipeline(url, jsonData, c)
+		time.Sleep(10 * time.Second)
 	}
 
 	//for loop for go routine channels
@@ -42,34 +43,30 @@ func main() {
 	}
 }
 
-func deployPipeline(jsonData []byte,
-	fileName string, host string,
-	namespace string, trim string,
-	c chan string, authToken string) {
+func deployPipeline(url string, file []byte, c chan string) {
 
-	//exported pipelines come with -cdap-data-pipeline.json suffix we only want the name to call the pipline
-	fileName = strings.TrimSuffix(fileName, trim)
-
-	var bearer = "Bearer" + authToken
-
-	request, err := http.NewRequest("PUT", host+"/namespaces/"+namespace+"/apps/"+fileName, bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Printf("Http request failed with error %s\n", err.Error())
-	}
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Add("Authorization", bearer)
+	method := "PUT"
 	client := &http.Client{}
-	response, err := client.Do(request)
-	data, _ := ioutil.ReadAll(response.Body)
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(file))
 
-	c <- "Response Recieved"
-
-	//Error handing for err messages
 	if err != nil {
-		fmt.Printf("Http request failed with error %s\n", err.Error())
-	} else {
-		fmt.Println(string(data))
+		fmt.Println(err)
+	}
+	req.Header.Add("Authorization", os.ExpandEnv("Bearer ${AUTH_TOKEN}"))
+	req.Header.Add("Content-Type", "application/json")
+
+	res, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
 	}
 
-	defer response.Body.Close()
+	fmt.Println(res.StatusCode)
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf(string(body))
+	defer res.Body.Close()
+	c <- ("response received " + url + "\n")
 }
